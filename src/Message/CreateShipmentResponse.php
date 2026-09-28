@@ -105,6 +105,12 @@ class CreateShipmentResponse extends AbstractNavlungoResponse implements Shipmen
             return $payload;
         }
 
+        // Update answers put the post object in `data`; create answers wrap a
+        // list of posts in `data`. Support both.
+        if (isset($data['post_number']) || isset($data['reference_id'])) {
+            return array_merge($payload, $data);
+        }
+
         $first = $data[0] ?? null;
 
         return is_array($first) ? array_merge($payload, $first) : $payload;

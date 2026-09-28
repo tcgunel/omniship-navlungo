@@ -13,13 +13,16 @@ Navlungo is a shipping aggregator: merchants connect their own cargo agreements 
 - [API reference](#api-reference)
   - [createShipment](#createshipment)
   - [createReturnShipment](#createreturnshipment)
+  - [updateShipment](#updateshipment)
+  - [searchShipments](#searchshipments)
   - [getTrackingStatus](#gettrackingstatus)
   - [cancelShipment](#cancelshipment)
   - [getBarcode](#getbarcode)
   - [getMyCarriers / getAllCarriers](#getmycarriers--getallcarriers)
-  - [getAddresses / createAddress](#getaddresses--createaddress)
+  - [Address book](#address-book)
 - [Token caching](#token-caching)
 - [Status mapping](#status-mapping)
+- [Error codes](#error-codes)
 - [Sandbox vs production](#sandbox-vs-production)
 - [Gotchas, traps, and lessons learned](#gotchas-traps-and-lessons-learned)
 - [Testing](#testing)
@@ -122,6 +125,36 @@ $navlungo->createReturnShipment([
 ])->send();
 ```
 
+### updateShipment
+
+`POST /post/update` — changes a post while it is **Hazırlanıyor** or **Teslim Alınacak** (`inProgress` must be 0). Only send what changes; omitted fields keep their current values.
+
+```php
+$navlungo->updateShipment([
+    'postNumber' => 'MFYS29970',
+    'shipTo' => new Address(/* corrected recipient */),
+    'packages' => [new Package(weight: 2.0, desi: 3.5)],
+    'note' => 'Kapıya bırakabilirsiniz',
+])->send();
+```
+
+Standard posts keep the configured `senderAddressId`; return posts (`shipFrom` inline + `recipientAddressId`) work too.
+
+### searchShipments
+
+`POST /post/check` — detailed search, newest first, up to 50 results. At least one filter is required.
+
+```php
+$response = $navlungo->searchShipments([
+    'referenceId' => 'OMN-12345',      // or postNumber
+    'recipientPhone' => '+90 532 123 45 67', // sender*/recipient* filters
+    'limit' => 50,
+])->send();
+
+$response->getShipments();      // raw rows
+$response->getTrackingInfos();  // TrackingInfo[] with mapped statuses
+```
+
 ### getTrackingStatus
 
 `GET /post/check/{post_number|reference_id}`
@@ -174,11 +207,13 @@ $all = $navlungo->getAllCarriers()->send()->getCarriers();
 
 Each carrier row carries `id`, `carrier_name`, `short_name`, `tracking_url`, `post_type[]` (1 same-day / 2 standard / 3 return) and `cod`.
 
-### getAddresses / createAddress
+### Address book
 
 ```php
 $addresses = $navlungo->getAddresses(['addressType' => 'sender'])->send()->getAddressOptions();
 // [56027 => 'Teknokent']
+
+$address = $navlungo->getAddress(['addressId' => 56027])->send()->getAddress();
 
 $created = $navlungo->createAddress([
     'addressType' => 'sender',
@@ -188,9 +223,20 @@ $created = $navlungo->createAddress([
 ])->send();
 
 $created->getAddressId();
+
+$navlungo->updateAddress([
+    'addressId' => 56027,
+    'addressType' => 'sender',
+    'locationName' => 'Merkez Depo',
+    'address' => $correctedAddress,
+])->send()->getAddressId();
+
+$navlungo->deleteAddress(['addressId' => 56027])->send()->getMessage();
 ```
 
-Sender addresses require `locationName`; recipient entries do not. Phone numbers are normalised to `+90 5XX XXX XX XX`.
+Sender addresses require `locationName`; recipient entries do not. Phone numbers are normalised to `+90 5XX XXX XX XX`. Only one address can be the main warehouse.
+
+> The docs page for address update omits the id in the URL; the Postman collection and the live API use `PUT /address-book/update/{id}` — this package follows the live behaviour.
 
 ---
 
@@ -235,6 +281,22 @@ Unknown codes map to `UNKNOWN`. Event descriptions come from the log rows' `acti
 
 ---
 
+## Error codes
+
+HTTP-level codes documented by Navlungo (the response body carries the human-readable `error`/`message` this package surfaces via `getMessage()`):
+
+| Code | Meaning | Notes |
+|---|---|---|
+| 400 | Bad Request | Malformed JSON or a rule failure, e.g. no price list for the carrier, card-COD not supported by the carrier, COD on returns. |
+| 401 | Unauthorized | Missing/invalid/expired token, or the API user lacks the permission. |
+| 402 | Payment Required | Wallet balance too low (e.g. barcode generation). Top up and retry. |
+| 404 | Not Found | Unknown route/record. Also returned for `zpl-pure` without the account permission. |
+| 405 | Method Not Allowed | Wrong HTTP method for the endpoint. |
+| 422 | Validation Error | Field-level details in `error`; also returned while a post is mid-operation, or when trying to change the address number on an Aras Kargo post. |
+| 429 | Too Many Requests | Rate limit — slow down; resets within the indicated window. |
+| 500 | Server Error | Unexpected; the body carries a `#eventId` for support. |
+| 502 / 503 | Bad Gateway / Unavailable | External service (e.g. the ZPL barcode service) failed or is down — retry later. |
+
 ## Sandbox vs production
 
 | | QA | Production |
@@ -273,6 +335,9 @@ Reusing a reference (for example when retrying a create that actually succeeded)
 
 ### 8. Tracking falls back to the post number
 `carrier_tracking_code` is only issued once the underlying carrier accepts the parcel. Until then the package reports the Navlungo post number so merchants and customers always have something to search.
+
+### 9. There is no bulk create endpoint
+The docs show `POST /post/create/bulk` as an "asynchronous notification" alternative inside an HTML comment, but the route does not exist on the live API (`404 The route v2.1/post/create/bulk could not be found`). For more than 10 posts, send them one at a time (or talk to Navlungo about enabling the notification flow).
 
 ---
 

@@ -7,6 +7,7 @@ namespace Omniship\Navlungo\Message;
 use Omniship\Common\Address;
 use Omniship\Common\Exception\InvalidRequestException;
 use Omniship\Common\Message\ResponseInterface;
+use Omniship\Navlungo\Support\Packages;
 use Omniship\Common\Package;
 
 class CreateShipmentRequest extends AbstractNavlungoRequest
@@ -133,7 +134,7 @@ class CreateShipmentRequest extends AbstractNavlungoRequest
         }
 
         $isCod = $this->getCashOnDelivery();
-        [$desi, $packageCount] = self::summarizePackages($this->getPackages() ?? []);
+        [$desi, $packageCount] = Packages::summarize($this->getPackages() ?? []);
 
         $post = [
             'desi' => $desi > 0 ? $desi : 1.0,
@@ -185,16 +186,7 @@ class CreateShipmentRequest extends AbstractNavlungoRequest
      */
     protected static function summarizePackages(array $packages): array
     {
-        $desi = 0.0;
-        $count = 0;
-
-        foreach ($packages as $package) {
-            $quantity = max(1, $package->quantity);
-            $desi += (float) ($package->getDesi() ?? $package->weight) * $quantity;
-            $count += $quantity;
-        }
-
-        return [round($desi, 2), $count];
+        return Packages::summarize($packages);
     }
 
     protected function createResponse(mixed $data): ResponseInterface

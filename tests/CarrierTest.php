@@ -63,24 +63,34 @@ it('exposes sensible defaults', function () {
 it('supports the standard carrier methods', function () {
     expect($this->carrier->supports('createShipment'))->toBeTrue()
         ->and($this->carrier->supports('createReturnShipment'))->toBeTrue()
+        ->and($this->carrier->supports('updateShipment'))->toBeTrue()
+        ->and($this->carrier->supports('searchShipments'))->toBeTrue()
         ->and($this->carrier->supports('getTrackingStatus'))->toBeTrue()
         ->and($this->carrier->supports('cancelShipment'))->toBeTrue()
         ->and($this->carrier->supports('getBarcode'))->toBeTrue()
         ->and($this->carrier->supports('getMyCarriers'))->toBeTrue()
         ->and($this->carrier->supports('getAddresses'))->toBeTrue()
-        ->and($this->carrier->supports('createAddress'))->toBeTrue();
+        ->and($this->carrier->supports('getAddress'))->toBeTrue()
+        ->and($this->carrier->supports('createAddress'))->toBeTrue()
+        ->and($this->carrier->supports('updateAddress'))->toBeTrue()
+        ->and($this->carrier->supports('deleteAddress'))->toBeTrue();
 });
 
 it('returns the right request class per method', function () {
     expect($this->carrier->createShipment())->toBeInstanceOf(CreateShipmentRequest::class)
         ->and($this->carrier->createReturnShipment())->toBeInstanceOf(CreateReturnShipmentRequest::class)
+        ->and($this->carrier->updateShipment())->toBeInstanceOf(\Omniship\Navlungo\Message\UpdateShipmentRequest::class)
+        ->and($this->carrier->searchShipments())->toBeInstanceOf(\Omniship\Navlungo\Message\SearchShipmentsRequest::class)
         ->and($this->carrier->getTrackingStatus())->toBeInstanceOf(GetTrackingStatusRequest::class)
         ->and($this->carrier->cancelShipment())->toBeInstanceOf(CancelShipmentRequest::class)
         ->and($this->carrier->getBarcode())->toBeInstanceOf(GetBarcodeRequest::class)
         ->and($this->carrier->getMyCarriers())->toBeInstanceOf(GetCarriersRequest::class)
         ->and($this->carrier->getAllCarriers())->toBeInstanceOf(GetCarriersRequest::class)
         ->and($this->carrier->getAddresses())->toBeInstanceOf(GetAddressesRequest::class)
-        ->and($this->carrier->createAddress())->toBeInstanceOf(CreateAddressRequest::class);
+        ->and($this->carrier->getAddress())->toBeInstanceOf(\Omniship\Navlungo\Message\GetAddressRequest::class)
+        ->and($this->carrier->createAddress())->toBeInstanceOf(CreateAddressRequest::class)
+        ->and($this->carrier->updateAddress())->toBeInstanceOf(\Omniship\Navlungo\Message\UpdateAddressRequest::class)
+        ->and($this->carrier->deleteAddress())->toBeInstanceOf(\Omniship\Navlungo\Message\DeleteAddressRequest::class);
 });
 
 it('carries carrier defaults into created requests', function () {

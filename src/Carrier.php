@@ -10,10 +10,15 @@ use Omniship\Navlungo\Message\CancelShipmentRequest;
 use Omniship\Navlungo\Message\CreateAddressRequest;
 use Omniship\Navlungo\Message\CreateReturnShipmentRequest;
 use Omniship\Navlungo\Message\CreateShipmentRequest;
+use Omniship\Navlungo\Message\DeleteAddressRequest;
 use Omniship\Navlungo\Message\GetAddressesRequest;
+use Omniship\Navlungo\Message\GetAddressRequest;
 use Omniship\Navlungo\Message\GetBarcodeRequest;
 use Omniship\Navlungo\Message\GetCarriersRequest;
 use Omniship\Navlungo\Message\GetTrackingStatusRequest;
+use Omniship\Navlungo\Message\SearchShipmentsRequest;
+use Omniship\Navlungo\Message\UpdateAddressRequest;
+use Omniship\Navlungo\Message\UpdateShipmentRequest;
 
 /**
  * Navlungo Domestic (domestic-api.navlungo.com) v2.1 carrier driver.
@@ -86,6 +91,22 @@ class Carrier extends AbstractHttpCarrier
     /**
      * @param array<string, mixed> $options
      */
+    public function updateShipment(array $options = []): RequestInterface
+    {
+        return $this->createRequest(UpdateShipmentRequest::class, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function searchShipments(array $options = []): RequestInterface
+    {
+        return $this->createRequest(SearchShipmentsRequest::class, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
     public function getTrackingStatus(array $options = []): RequestInterface
     {
         return $this->createRequest(GetTrackingStatusRequest::class, $options);
@@ -134,9 +155,33 @@ class Carrier extends AbstractHttpCarrier
     /**
      * @param array<string, mixed> $options
      */
+    public function getAddress(array $options = []): RequestInterface
+    {
+        return $this->createRequest(GetAddressRequest::class, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
     public function createAddress(array $options = []): RequestInterface
     {
         return $this->createRequest(CreateAddressRequest::class, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function updateAddress(array $options = []): RequestInterface
+    {
+        return $this->createRequest(UpdateAddressRequest::class, $options);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function deleteAddress(array $options = []): RequestInterface
+    {
+        return $this->createRequest(DeleteAddressRequest::class, $options);
     }
 
     public function getBaseUrl(): string
