@@ -1,0 +1,48 @@
+{
+    "name": "tcgunel/omniship-navlungo",
+    "description": "Navlungo Domestic carrier for Omniship shipping library",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "tcgunel/omniship-common": "^0.1",
+        "ext-json": "*",
+        "psr/simple-cache": "^1.0 || ^2.0 || ^3.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "guzzlehttp/psr7": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Omniship\\Navlungo\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Omniship\\Navlungo\\Tests\\": "tests/"
+        },
+        "files": [
+            "tests/Helpers.php",
+            "tests/Message/TokenFixtures.php"
+        ]
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../omniship",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
